@@ -1,0 +1,11 @@
+
+This mirror was done via darcs-to-git .   The basic idea is as follows:  darcs-to-git mirrors the darcs
+repository (local copy on local system) into the master branch of the git repository, updating as it goes.
+
+You can NOT work in the master branch, that is reserved for the darcs mirror (this should be changed, but 
+I'm a bit too busy right now to change the tool).  You do all work on the other branch (in my case, 
+cls-sync-version) and rebase master into cls-sync-version, or whatever you want to call it, as needed.
+
+So it's a one-way mirror, darcs -> git (master) -> git (local working branch).
+
+Good enough for me, perhaps for you as well.
