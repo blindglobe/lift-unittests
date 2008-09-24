@@ -147,3 +147,4 @@ doesn't seem to include. LIFT will define these for now but you may want to cons
 		      :directory directory)
        (asdf::system-source-directory system)))))
   
+(pushnew :lift *features)
