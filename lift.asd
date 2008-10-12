@@ -8,6 +8,8 @@
   :licence "MIT Style License; see file COPYING for details"
   :description "LIsp Framework for Testing"
   :long-description "LIFT is an SUnit variant and much much more."  
+;;  :depends-on (:com.metabang.trivial-timeout )
+  :depends-on (:trivial-timeout )
   :components ((:module 
 		"timeout"
 		:pathname "dev/"
