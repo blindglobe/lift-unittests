@@ -8,16 +8,19 @@
   :licence "MIT Style License; see file COPYING for details"
   :description "LIsp Framework for Testing"
   :long-description "LIFT is an SUnit variant and much much more."  
-  :components ((:module
+  :depends-on (:trivial-timeout)
+  :components (
+#|	       (:module
 		"timeout"
 		:pathname "timeout/"
 		:components 
 		((:file "package")
 		 (:file "with-timeout" :depends-on ("package"))))
+|#
 	       (:module 
 		"setup"
 		:pathname "dev/"
-		:depends-on ("timeout")
+;;		:depends-on ("timeout")
 		:components
 		((:file "packages")
 		 (:file "utilities" 
