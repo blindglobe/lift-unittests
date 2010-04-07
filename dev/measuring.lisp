@@ -102,13 +102,19 @@ The accuracy can be no greater than {hs internal-time-units-per-second}.")
 (defvar *profiling-threshold* nil)
 
 (defun make-profiled-function (fn)
+  "set up profiler and call function FN."
   (lambda (style count-calls-p)
     (declare (ignorable style count-calls-p))
     #+allegro
     (prof:with-profiling (:type style :count count-calls-p)
       (funcall fn))
-    #-allegro
-    (funcall fn)))
+    #+sbcl
+    (progn 
+      (sb-profile:profile fn)
+      (funcall fn))
+    #-(or allegro sbcl)
+    (funcall fn)
+    ))
 
 (defun generate-profile-log-entry (log-name name seconds conses results error)
   (ensure-directories-exist log-name)

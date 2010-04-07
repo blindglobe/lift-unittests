@@ -775,6 +775,14 @@ lift::(progn
     (setf prof::*current-profile* (prof::make-current-profile))))
 
 #+allegro
+(defun cancel-current-profile (&key force?)
+  (when (prof::current-profile-actual prof::*current-profile*)
+    (unless force?
+      (assert (member (prof:profiler-status) '(:inactive))))
+    (prof:stop-profiler)
+    (setf prof::*current-profile* (prof::make-current-profile))))
+
+#+allegro
 (defun current-profile-sample-count ()
    (ecase (prof::profiler-status :verbose nil)
     ((:inactive :analyzed) 0)
@@ -782,6 +790,13 @@ lift::(progn
      (slot-value (prof::current-profile-actual prof::*current-profile*) 
 		 'prof::samples))
     (:sampling (warn "Can't determine count while sampling"))))
+
+#+sbcl
+(defun current-profile-sample-count ()
+  "For SBCL, just use existing profile report.  So we return 0, since
+we aren't tracking anything outside of the SBCL profiler.  Consider
+the statistical profiler as a possible option."
+  0)
 
 #+allegro
 (defun show-flat-profile (output)
@@ -851,6 +866,46 @@ lift::(progn
 	  (write-profile-report pathname name style body
 				seconds conses error count-calls-p))))
     (values-list (if (atom results) (list results) results))))
+
+#+sbcl
+(defun with-profile-report-fn 
+    (name style fn body &key
+     (log-name *benchmark-log-path*)
+     (count-calls-p *count-calls-p*)
+     (timeout nil))
+  "Report on profiling, incorporated within LIFT."
+  (assert (member style '(:time :space :count-only)))
+  (sb-profile:reset)
+  (let* ((seconds 0.0) (conses 0) 
+	 error
+	 results
+	 (profile-fn (make-profiled-function fn)))
+    (unwind-protect
+	 (multiple-value-bind (result measures errorp)
+	     (while-measuring (t measure-seconds measure-space)
+	       (handler-case
+		   (with-timeout (timeout)
+		     (funcall profile-fn style count-calls-p))
+		 (timeout-error 
+		     (c)
+		   (declare (ignore c)))
+		 (error (c)
+		   (error c))))
+	   (setf seconds (first measures) conses (second measures) 
+		 results result error errorp))
+      ;; cleanup / ensure we get report
+      (generate-profile-log-entry log-name name seconds conses results error)
+      (when (> (current-profile-sample-count) 0)
+	(let ((pathname (unique-filename
+			 (merge-pathnames
+			  (make-pathname 
+			   :type "prof"
+			   :name (format nil "~a-~a-" name style))
+			  log-name))))
+	  (write-profile-report pathname name style body
+				seconds conses error count-calls-p))))
+    (values-list (if (atom results) (list results) results))))
+
 
 (defun write-profile-report (pathname name style body seconds conses
 			     error count-calls-p)
